@@ -1,6 +1,8 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import { open } from "@tauri-apps/plugin-dialog";
+
   import { onMount } from "svelte";
 
   // --- Types ---
@@ -61,12 +63,24 @@
     }
   }
 
-  async function sendFileTo(device: Device) {
-    // In a real app, we'd use a file picker. For now, we'll ask the backend or mock.
-    // Since we don't have a file picker here, let's assume the user selects a path
-    // via a Tauri Dialog or similar. For this demonstration, we'll just log.
-    statusMessage = `Preparing to send to ${device.name}...`;
-    // Note: Actual send_file requires a path. We'd use @tauri-apps/plugin-dialog
+  async function selectAndSendFile(device: Device) {
+    try {
+      const selected = await open({
+        multiple: false,
+        directory: false,
+      });
+
+      if (selected && !Array.isArray(selected)) {
+        statusMessage = `Sending file to ${device.name}...`;
+        await invoke("send_file", {
+          filepath: selected,
+          targetIp: device.ip,
+          targetPort: device.port,
+        });
+      }
+    } catch (e) {
+      statusMessage = `Error sending file: ${e}`;
+    }
   }
 
   // --- Lifecycle & Listeners ---
@@ -142,7 +156,7 @@
             <h3>{device.name}</h3>
             <p>{device.ip}</p>
           </div>
-          <button class="btn-send" onclick={() => sendFileTo(device)}>
+          <button class="btn-send" onclick={() => selectAndSendFile(device)}>
             Send File
           </button>
         </div>
@@ -162,6 +176,7 @@
       {/if}
     </div>
   </section>
+
 
   {#if transferProgress}
     <div class="transfer-overlay">
