@@ -26,4 +26,5 @@ uuid = { version = "1.19.0", features = ["v4"] }
 whoami = "2.0.2"
 local-ip-address = "0.6.8"
 dirs = "6.0.0"
+tauri-plugin-dialog = "2"
 
